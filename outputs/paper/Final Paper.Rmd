@@ -1,0 +1,507 @@
+---  
+title: "Team Manager’s Implementation to Improve Employee's Job Satisfaction"
+author: "Jiayi Wu"
+date: "`r format(Sys.Date(),'%e de %B, %Y')`"
+output: pdf_document
+subtitle: "A Study of Relationship between Job satisfaction, Personal Work Experience, Work Distribution, Social Fullfillment at Work, and Work Life Balance"
+abstract: "This research examines citizens'perceptions of job satisfaction using data from the General Social Survey 2016: Canadians at Work and Home. The findings reveal that the job satisfaction of employees is affected by their personal work experience, workplace relationships, task allocation, and level of work-life balance. The analysis comprises of a linear regression model and is carried out using the statistical programming language R. The findings contribute to our analysis of the issue at the local level, providing effective support to implementation of team manager to improve job satisfaction of employee. \
+
+\
+\
+
+
+\\par\\textbf{Keywords:} job satisfaction, work life balance, work distribution, workplace relationships, toronto residents, 2016 general social survey"
+
+header-includes:
+ - \usepackage{float}
+ - \floatplacement{figure}{H}
+ - \floatplacement{table}{H}
+
+thanks: 'Code and data are available at: https://github.com/wujiayi66wujiayi/STA304-Final-Project.git'
+bibliography: ref_list.bib
+---
+
+# 1 Introduction
+
+With the onset of globalization, one of the most significant difficulties confronting managers is implementing effective human capital strategies to boost the firm's performance. [@Linz2002] asserts that a positive association exists between organizational commitment and job satisfaction. On the basis that a positive attitude toward work and increased job satisfaction improve an individual's performance, which in turn benefits the business, the benefit of satisfied employees becomes more vital.
+\ 
+The purpose of this paper is to investigate how several predictor variables related to work experience, personal relationships at work, task allocation, and work-life balance affect workers' job satisfaction from a variety of perspectives, as well as their potential impact on employee performance by simple linear regression model, which is critical for managers seeking to increase organizational efficiency. 
+\ 
+The rest of this paper is organized as follows: The data section introduces the source, feature, and background of the database used in this research, then variables introduction, data cleaning process and exploratory data analysis are conducted with several tables and plots. The model section explains what model is used in this research with the detailed information about the usage, structure, formula, and assumption of linear regression model to provide readers a deeper understanding. The result section shows how a linear regression model is applied by scatter plots, fitted lines, and statistical tables, then detailed explanation is followed to illustrate the result found by the model. Discussion section identifies what is done and what we learn through this research, specially focusing on which direction managers should head to improve employees’ job satisfaction. The limitation and future study direction are demonstrated at the end of the discussion section. The Appendix section is a supplement to the main sections. At the end of the paper, the reference section lists all references in this paper.
+
+
+
+```{r , include=FALSE}
+library(tidyverse)
+library(cowplot)
+library(kableExtra)
+library(dplyr)
+```
+
+```{r , include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r setup, include = FALSE}
+# data cleaning
+data <- read.csv("dataset_SLR.csv")
+data_cleaned <- data %>%
+  filter(wdr_07<06 & sfc_07<06 & sfc_08<06 & jsr_02<6 & jsr_07<6 & jsr_08<6 & jsr_09<6 & jsr_10<6 & wdr_02<6 & wdr_06<6 & wdr_09<6 & wdr_10<6 & sfc_01<6 & tmg_01<6 & tmg_03<6) %>%
+rename("Job_Satisfaction"="jsr_02",
+         "Belonging"="jsr_07",
+         "Motivation_to_perform"="jsr_08",
+         "Accomplishment"="jsr_09",
+         "Doing_useful_work"="jsr_10",
+         "Team_works"="wdr_02",
+         "Colleagues_support"="wdr_06",
+         "Fair_work_distribution"="wdr_09",
+         "Decisions_influence"="wdr_10",
+         "Friends_at_work"="sfc_01",
+         "Conflicts_with_manager"="sfc_07",
+         "Conflicts_with_colleagues"="sfc_08",
+         "Impact_of_job_on_family"="tmg_01",
+         "Job_life_balance"="tmg_03",
+         "Manager_support"="wdr_07")
+
+```
+
+
+# 2 Data
+
+This report is analyzed using R [@r], using tidyverse[@tidy] and dplyr[@dplyr] packages. All the tables and graphs are created using ggplot2 [@Wickham2016] , with the help of cowplot[@Claus2020], and kableExtra[@Hadley2021]. The file is knitted using knitr [@Xie2014]. 
+
+## 2.1 Data Resource
+
+The dataset for this study comes from the 2016 General Social Survey [@GSS]on Canadians at Work and Home ("General Social Survey on Canadians at Work and Home (Cycle 30)" 2016). This paper specifically examines how Canadian residents feel about their job satisfaction by asking questions about their work experience, personal relationships at work, their feelings about job task allocation, and their feelings about work-life balance. The population for this study is defined as all Canadians aged 15 years and older in 2016, with the following exceptions: 1. Inhabitants of Yukon, Northwest Territories, and Nunavut; and 2. Institutional residents on a full-time basis.
+
+## 2.2 Data Feature
+
+There are some features that make this dataset unique and Irreplaceable.The 2016 GSS on Canadians at Work and Home is based on a new GSS frame that incorporates data from Statistics Canada's sources of telephone numbers and the Address Register. This new frame is applied during data collection which covers homes with just a mobile phone, an increasing group that was not included in the previous Random Digit Dialing frame. Additionally, the sample unit is distinct, being specified as groupings of telephone numbers. Each record in the survey frame was allocated to province-specific stratum. Following that, a random sample of records without replacement was picked in each stratum. Cycle 30 had a target sample size of 20,000 respondents, but received 19,609 responses.
+
+## 2.3 Variable Introduction and Cleaning
+
+Since only the code value is from 1 to 5 has actual meaning which is either the frequency from Always to Never (Appendix 1) or the degree from Strongly Agree to Strongly Disagree (Appendix 2), only code less than 6 or or 06 are kept by the “filter” function. As a result, the dataset after the cleaning process will only contain values that are from 1/01 to 5/05.To have a better understanding of each variable, it is critical to modify the variable name to reflect the variable's real meaning, which may be performed using the "rename" function. The cleaned dataset contains 1 response variable and 15 explanatory variables (in column), and 7360 cases (in row). The table below shows all variable names and the question text that collected relevant variable dates, which can provide better understanding about all variables. 
+
+#### Figure 1: The Table Descrips Each Variable in the Chosen Dataset After Data Cleaning
+
+|Variable Name                               |       Question Text                                                                         |
+|--------------------------------------------|---------------------------------------------------------------------------------------------|
+|Job Satisfaction|In general, how satisfied are you with your job?|
+|--------------------------------------------|---------------------------------------------------------------------------------------------|
+|Belonging|To what extent do you agree or disagree with "I feel like I belong in the organization I work for"|
+|--------------------------------------------|---------------------------------------------------------------------------------------------|
+|Motivation to perform|To what extent do you agree or disagree with "The organization I work for motivates me to perform at my best"|
+|--------------------------------------------|---------------------------------------------------------------------------------------------|
+|Accomplishment|Does your job give you a sense of accomplishment?|
+|--------------------------------------------|---------------------------------------------------------------------------------------------|
+|Doing useful work|Do you feel you are doing useful work?|
+|--------------------------------------------|---------------------------------------------------------------------------------------------|
+|Team works|How often would you say your team works well together?|
+|--------------------------------------------|---------------------------------------------------------------------------------------------|
+|colleagues support|How often do your colleagues help and support you?|
+|--------------------------------------------|---------------------------------------------------------------------------------------------|
+|manager support|How often does your manager or supervisor help and support you?|
+|--------------------------------------------|---------------------------------------------------------------------------------------------|
+|Fair work distribution|To what extent do you agree or disagree with "Work is distributed fairly in my workplace"|
+|--------------------------------------------|---------------------------------------------------------------------------------------------|
+|Decisions influence|To what extent do you agree or disagree with "I have opportunities to provide input into decisions that affect my work"|
+|Friends at work|How many good friends do you have at work?|
+|--------------------------------------------|---------------------------------------------------------------------------------------------|
+|Conflicts with managers|During the past 12 months, how often have you had conflicts at work with your managers?|
+|--------------------------------------------|---------------------------------------------------------------------------------------------|
+|Conflicts with colleagues|During the past 12 months, how often have you had conflicts at work with your colleagues?|
+|--------------------------------------------|---------------------------------------------------------------------------------------------|
+|Impact of job on family|In the past 12 months, how often has it been difficult to fulfill family responsibilities because of the amount of time you spent on your job?|
+|--------------------------------------------|---------------------------------------------------------------------------------------------|
+|Balance between job and life|How satisfied are you with the balance between your job and home life?|
+
+## 2.4 Exploratory Data Analysis
+
+All explanatory variables are classified into 4 categories: work experience, relationship in work, task allocation and work-life balance. The exploratory data analysis is applied based on those 4 categories. 
+
+### 2.4.1 Working Experience 
+
+Working Experience includes a sense of belonging to organization, motivation to perform, sense of accomplishment, and sense of doing useful work. The barplot is applied to view the distribution of those 4 variables.
+
+\ 
+#### Figure 2: The Barplot of Working Experience Variables 
+
+\ 
+
+```{r,height=2,width=4, echo=FALSE, warning=FALSE}
+
+# Sense of belonging to the organization
+A<-ggplot(data_cleaned, aes(x=Belonging , fill = Belonging)) +
+   geom_bar(colour="grey", fill="pink")+
+   labs(title = " Sense of Belonging to Organization", x="Scale: strongly agree to strongly disagree")+
+   theme(text=element_text(size=8))
+
+# Motivation to perform
+B<-ggplot(data_cleaned, aes(x = Motivation_to_perform, fill= Motivation_to_perform)) +
+   geom_bar(colour="grey", fill="pink")+
+   labs(title = "Motivation to Perform", x="Scale: strongly agree to strongly disagree" )+
+   theme(text=element_text(size=8))
+   
+# Sense of Accomplishment
+C<-ggplot(data_cleaned, aes(x = Accomplishment , fill = Accomplishment)) + 
+   geom_bar(colour="grey", fill="light blue")+
+   labs(title = "Sense of Accomplishment", x="Scale: Always to Never")+
+   theme(text=element_text(size=8))
+
+# Sense of Doing Useful Work
+D<-ggplot(data_cleaned, aes(x = Doing_useful_work , fill = Doing_useful_work)) +
+   geom_bar(colour="grey", fill="light blue")+
+   labs(title = "Sense of Doing Useful Work", x="Scale: Always to Never" )+
+   theme(text=element_text(size=8))
+
+plot_grid(A, B, C, D, ncol = 2, nrow = 2) 
+
+```
+\ 
+
+All 4 bar plots are right-skewed, and their mean value is less than median value. The variable called motivation to perform has the similar distribution of the variable sense of accomplishment. Related to real life, the common sense that for most people, their sense of accomplishment is part of their motivation to perform explains this similar distribution. Due to the similarity and the inclusion relation between those to variables, motivation to perform could represent the sense of doing useful work during the model building process.
+\ 
+
+### 2.4.2 Personal Relationship in Work
+
+Personal relationship in work includes team works well together, help and support from colleagues, help and support from managers, help and support from managers, number of good friends at work, conflicts with managers at work and conflicts with colleagues at work. The bar plot is applied to view the distribution of those 6 variables.
+
+
+#### Figure 3: The Barplot of Relationship in Work Variables 
+
+\ 
+
+```{r,height=2,width=4, echo=FALSE, warning=FALSE}
+
+# Team works well together
+E<-ggplot(data_cleaned, aes(x=Team_works , fill = Team_works)) +
+   geom_bar(colour="grey", fill="pink")+
+   labs(subtitle = "Team works well together", x="Scale: Always to Never")+
+   theme(text=element_text(size=8))
+
+# Help and support from colleagues
+Z<-ggplot(data_cleaned, aes(x =Colleagues_support, fill= Colleagues_support)) +
+   geom_bar(colour="grey", fill="pink")+
+   labs(subtitle = "Help and support from \n colleagues", x="Scale: Always to Never" )+
+   theme(text=element_text(size=8))
+   
+# Help and support from \n managers
+G<-ggplot(data_cleaned, aes(x = Manager_support, fill = Manager_support)) +
+   geom_bar(colour="grey", fill="pink")+
+   labs(subtitle = "Help and support from \n managers", x="Scale: Always to Never")+
+   theme(text=element_text(size=8))
+
+# Number of good friends at work 
+H<-ggplot(data_cleaned, aes(x = Friends_at_work , fill = Friends_at_work)) +
+   geom_bar(colour="grey", fill="light blue")+
+   labs(subtitle = "Number of good friends at \n work", x="Scale: Many to None" )+
+   theme(text=element_text(size=8))
+
+# Conflicts with managers at work
+I<-ggplot(data_cleaned, aes(x = Conflicts_with_manager, fill = Conflicts_with_manager)) +
+   geom_bar(colour="grey", fill="light blue")+
+   labs(subtitle = "Conflicts with managers at \n work", x="Scale: Always to Never" )+
+   theme(text=element_text(size=8))
+
+# Conflicts with colleagues at work
+J<-ggplot(data_cleaned, aes(x = Conflicts_with_colleagues, fill = Conflicts_with_colleagues)) +
+   geom_bar(colour="grey", fill="light blue")+
+   labs(subtitle = "Conflicts with colleagues at \n work", x="Scale: Always to Never" )+
+   theme(text=element_text(size=8))
+
+plot_grid(E, Z, G, H, I, J, ncol = 3, nrow = 2) 
+  
+```
+
+\ 
+
+Based on the graph, the bar plot of conflicts with managers at work and conflicts with colleagues at work are negatively related to other variables, as others are all right-skewed and only those two bar plots related to conflict variables are left-skewed. Among right-skewed bar plots, 2 bar plots related to help and 1 plot related to friends have similar distributions, as the count of the first bars and second bar is close. Based on common sense, the variables named help and support from colleagues, help and support from managers, help and support from managers, number of good friends at work, conflicts with managers at work and conflicts with colleagues at work can represent how well the team works together, which means they can be replaced by the variable “team works well together” to investigate the relationship between job satisfaction and personal relationship in work. However,  it does not mean they are useless, since they can help to find what kind of actions managers need to take to improve employee’s job satisfaction by improving their personal relationship in work.
+
+
+### 2.4.3 Work-Life Balance & Task allocation
+
+Work-Life balance includes impact of time spent on job on family responsibilities, and satisfaction with the balance between job and home life. The boxplot is built to provide high-level information at a glance, offering general information about those two variables' symmetry, skew, variance, and outliers.
+
+Task allocation includes fair work distribution and opportunities to provide input into decisions. Barplot is built to view the distribution of those two categorical variables. 
+\ 
+#### Figure 4: The Boxplot of Work-Life Balance & The Barplot of Task allocation Variables 
+
+\ 
+\ 
+
+```{r,height=2,width=4, echo=FALSE, warning=FALSE}
+
+# Impact of time spent on job on family responsibilities
+R<-ggplot(data_cleaned, aes(Impact_of_job_on_family,'',fill=Impact_of_job_on_family)) + 
+  geom_boxplot(color='grey',fill='pink') + theme_classic()+
+  labs(x = "Impact of job on family responsibilities", y = "Count", subtitle = "The Box Plot of Impact of time spent on job on \n family responsibilities")+
+   theme(text=element_text(size=8))
+
+# Satisfaction with the balance between job and life
+S<-ggplot(data_cleaned, aes(Job_life_balance,'',fill=Job_life_balance)) + 
+  geom_boxplot(color='grey',fill='light blue') + theme_classic()+
+  labs(x = "Satisfaction with the balance between job and life", y = "Count", subtitle = "The Box Plot of Satisfaction with the balance \n between job and home life")+
+   theme(text=element_text(size=8))
+
+# Fair Work Distribution
+O<-ggplot(data_cleaned, aes(x=Fair_work_distribution , fill = Fair_work_distribution)) +
+   geom_bar(colour="grey", fill="pink")+
+   labs(subtitle = "Fair Work Distribution", x="Scale: strongly agree to strongly disagree")+
+   theme(text=element_text(size=8))
+
+# Opportunities to Provide Input into Decisions
+P<-ggplot(data_cleaned, aes(x=Decisions_influence , fill = Decisions_influence)) +
+   geom_bar(colour="grey", fill="light blue")+
+   labs(subtitle = "Opportunities to Provide Input into Decisions", x="Scale: strongly agree to strongly disagree")+
+   theme(text=element_text(size=8))
+
+plot_grid(R,S,O,P, ncol = 2, nrow = 2) 
+```
+\ 
+
+The boxplot shows that the impact of job on family responsibilities is left skewed and the mean is around 3.3, which means on average employees agree that sometimes, in the past 12 months, it has been difficult to fulfill family responsibilities because of the amount of time spent on job. The boxplot of satisfaction with the balance between job and home life is right skewed and the mean is around 2.3, which means on average, the employees’ feelings of balance between job and home life
+are between satisfied and neither satisfied nor dissatisfied. The variable called  satisfaction with the balance between job and life would be used to present the work-life balance  category in the following linear regression model.
+
+\ 
+
+The bar plot shows the distribution of fair work distribution and opportunities to provide input into decisions is almost the same, except the count of first bar and third in barplot of fair work distribution are close to each other. Based on the logic that if the work is fairly distributed, then employees should have opportunities to provide input into decisions, only the variable named fair work distribution would be used in a linear model.
+
+### 2.4.4 Response Variable
+
+\ 
+
+#### Figure 6: Summary Table of Response Variable
+```{r,echo=FALSE, warning=FALSE,include=FALSE}
+
+data_cleaned %>%
+ summarise(mean = round(mean(Job_Satisfaction),2),
+            median = median(Job_Satisfaction),
+            quantile(Job_Satisfaction))
+
+
+```
+|Mean|Median|1st Quantile|3rd Quantile|
+|-----|------|------------|-------------|
+|1.84 |   2  |      1     |      2      |
+
+In the linear regression model, the variable called job satisfaction would be recognized as a response variable to investigate how other explanatory variables influence employees’ feelling of job satisfaction. The median of job satisfaction is 2 which means half responders feel very satisfied with their jobs, and half have feelings below satisfied. First quantile is 1 and the third quantil is 2 means 25% of responders feel very satisfied with their job and   75% of responders are found to feel satisfied with their job when arranged in increasing order.
+
+
+# 3 Model
+
+By fitting a line to the observed data, regression models explain the connection between variables. [@Keith2004]A straight line is used in linear regression models, whereas a curved line is used in logistic and nonlinear regression models. By fitting a linear equation to observed data, simple linear regression [@slr] attempts to establish the relationship between two variables. One variable is considered explanatory, while another is considered dependent/response. 
+\ 
+In this research, a simple linear regression model is applied, since I plan to make a two-by-two comparison between employee's job satisfaction and each of all explanatory variables. 
+\ 
+Simple linear regression uses the equation for a line to model the relationship between two variables. If y is the outcome variable and x is the predictor variable, then:
+
+$$y = \beta_0 + \beta_1 x + \epsilon$$ 
+where 
+
+* $\beta_0$is a coefficient that represents the slope of the linear relationship between the variables x and y.
+
+* $\beta_1$is an intercept.
+
+* $\epsilon$is the error term .
+
+\ 
+
+#### The Assumptions of Simple Linear Regression:
+\ 
+To do a simple linear regression, some assumptions about the data must be made. This is due to the fact that it is a parametric test. The following assumptions are used while doing basic linear regression.
+
+#### i.Homogeneity of variance (homoscedasticity)
+\ 
+One of the primary assumptions made by a basic linear regression approach is that the error size remains constant. This basically indicates that the error size does not vary much while the independent variable's value varies.
+
+#### ii.Independence of Observations
+\ 
+All connections between observations are apparent, implying that nothing is concealed and that only acceptable sampling procedures are utilized to acquire data. 
+
+#### iii.Normality
+\ 
+The data has a normal pace of flow. 
+
+
+# Result
+\ 
+According to the the previous exploratory data analysis, there are 6 predictor variables (Belonging, Doing useful work, motivation to perform, fair work distribution, job life balance, and team works) are chosen to represents 4 different topic (work experience, personal relationship in work, work allocation, and work-life balance), in order to investigate how the level of employees’ job satisfaction is affected by those explanatory variables by simple linear regression model and find some reliable direction for managers to improve workers’ job satisfaction, thus, improve workers’ efficiency and organization’s ability to earn profit. 
+\ 
+
+#### Figure 7: Linear Relationship between Job Satisfaction and Explanatory Variables
+\ 
+
+
+```{r,fig.width=8,fig.height=6, echo=FALSE, warning=FALSE}
+# Build linear regression model
+  
+A_1 <- data_cleaned %>%
+  select(c(CASEID,Job_Satisfaction,Belonging,Motivation_to_perform,Doing_useful_work))%>%
+  gather(key = "variable",value = value,-c("CASEID",`Job_Satisfaction`))%>%
+ ggplot(aes(value,`Job_Satisfaction`,col=variable))+
+  geom_point(size=0.7)+
+  geom_smooth(formula = y ~ x,method = "lm",se=F,col="pink")+
+  facet_wrap(~variable)+
+  theme_classic()+
+  theme(legend.position = "none")+
+  scale_fill_brewer(palette = "Pastel1")+
+  labs(x="",title="",caption="")+
+  scale_x_continuous(breaks = seq(0,10,1))
+
+A_2 <- data_cleaned %>%
+  select(c(CASEID,Job_Satisfaction,Team_works,Fair_work_distribution,Job_life_balance))%>%
+  gather(key = "variable",value = value,-c("CASEID",`Job_Satisfaction`))%>%
+ ggplot(aes(value,`Job_Satisfaction`,col=variable))+
+  geom_point(size=0.7)+
+  geom_smooth(formula = y ~ x,method = "lm",se=F,col="light blue")+
+  facet_wrap(~variable)+
+  theme_classic()+
+  theme(legend.position = "none")+
+  scale_fill_brewer(palette = "Pastel1")+
+  labs(x="",title="",caption="")+
+  scale_x_continuous(breaks = seq(0,10,1))
+
+plot_grid(A_1,A_2, ncol = 1, nrow = 2) 
+
+```
+\ 
+\ 
+Based on the scatter plot and fitted line above, all 6 predicted variables are positively related to workers’ job satisfaction, and also shows there exists a strong relationship between those predicted variables and response variables as expected. The 6 fitted line look similar to each other but they do have different p-value, slope, and intercept, which indicate the strength level of ties between those explanatory variables and response variables are different. 
+\ 
+\ 
+
+```{r,message=FALSE, echo=FALSE, include=FALSE}
+# Summary of result from linear regression models 
+model1 <- lm(`Job_Satisfaction`~`Belonging`,data_cleaned)
+result1 <- summary(model1)
+result1 $ coefficients
+
+model2 <- lm(`Job_Satisfaction`~`Motivation_to_perform`,data_cleaned)
+result2 <- summary(model2)
+result2 $ coefficients
+
+model3 <- lm(`Job_Satisfaction`~`Doing_useful_work`,data_cleaned)
+result3 <- summary(model3)
+result3 $ coefficients
+
+model4 <- lm(`Job_Satisfaction`~`Team_works`,data_cleaned)
+result4 <- summary(model4)
+result4 $ coefficients
+
+model5 <- lm(`Job_Satisfaction`~`Fair_work_distribution`,data_cleaned)
+result5 <- summary(model5)
+result5 $ coefficients
+
+model6 <- lm(`Job_Satisfaction`~`Job_life_balance`,data_cleaned)
+result6 <- summary(model6)
+result6 $ coefficients
+```
+
+#### Figure 8: Result of Linear Regression Model 
+\ 
+
+
+```{r , echo=FALSE}
+# Construct table
+library(broom)
+
+knitr::kable(tidy(model1), caption = "Sense of belonging to the organization") %>%
+  kable_classic(full_width = F, html_font = "Cambria") %>%
+  kable_styling(latex_options = "hold_position")
+
+ knitr::kable(tidy(model2), caption = "Motivation to perform") %>%
+  kable_classic(full_width = F, html_font = "Cambria") %>%
+  kable_styling(latex_options = "hold_position")
+
+ knitr::kable(tidy(model3), caption = "Sense of doing useful work") %>%
+  kable_classic(full_width = F, html_font = "Cambria") %>%
+  kable_styling(latex_options = "hold_position")
+
+ knitr::kable(tidy(model4), caption = "Team works well together") %>%
+  kable_classic(full_width = F, html_font = "Cambria") %>%
+  kable_styling(latex_options = "hold_position")
+
+ knitr::kable(tidy(model5), caption = "Fair work distribution") %>%
+  kable_classic(full_width = F, html_font = "Cambria") %>%
+  kable_styling(latex_options = "hold_position")
+
+ knitr::kable(tidy(model6), caption = "Satisfaction with the balance between job and home life") %>%
+  kable_classic(full_width = F, html_font = "Cambria") %>%
+  kable_styling(latex_options = "hold_position")
+
+```
+\ 
+
+
+The p-value for each independent variable is used to test the null hypothesis that there is no association between the independent and dependent variables. There is no connection between the changes in the independent variable and the shifts in the dependent variable if there is no correlation. In other words, the data is inadequate to establish that there is a population-level impact. If the p-value for a variable is less than the 0.05 significance level, the sample data give sufficient evidence to reject the null hypothesis for the full population. The statistics strongly provide convincing evidence of a non-zero correlation. At the population level, changes in the independent variable are related with changes in the dependent variable. 
+
+\ 
+
+From the result table above, all of 6 predictor variables get the p-value of 0 which is obviously less than significance level 0.05. In this way, the sample data provide enough evidence to reject the null hypothesis for the entire population. The data favor the hypothesis that there is a non-zero correlation. Changes in the sense of belonging to the organization, motivation to perform, sense of doing useful work, team work well together, fair work distribution,  and satisfaction with the balance between job and home life are associated with changes in the workers’ job satisfaction at the population level. Those variables are statistically significant and are almost certainly worth using in the regression model. 
+
+\ 
+
+The coefficient value indicates how much the mean of the dependent variable changes when the independent variable is changed by one unit while the other variables in the model remain constant. Coefficients in statistical output are estimations of the population's real properties. The regression coefficients quantify the strength of the association between variables by using values that maintain the dependent variable's original units. Coefficient is also the slope of the fitted line.
+
+\ 
+
+According to the result table above, the coefficient of sense of belonging to the organization is 0.518 which is the highest, indicating that if workers’ sense of belonging to the organization increases by 1%, then the average workers’ job satisfaction would increase by 0.518%. Followed by the highest coefficient, the coefficient of motivation to perform is 0.467 and the coefficient of sense of doing useful work is 0.412.
+
+\ 
+
+In the simple linear regression model, the intercept value indicates the mean value of the response variable when all predictor variables are equal to zero. However, based on this dataset, this does not make sense to interpret intercept since it is not plausible for the value of predictor variables to be 0, as the range of all variables is from 1 to 5, which represent 5 different scales of degree level. 
+
+
+
+
+
+# 5 Discussion
+
+## 5.1 What is done in this paper?
+\ 
+The purpose of this paper is to examine how several predictor variables related to work experience, personal relationships at work, task allocation, and work-life balance affect workers' job satisfaction from a variety of perspectives and their potential impact on employee performance, which is critical for managers seeking to increase organizational efficiency. Each predictor variable is classified into one of four subject categories (work experience, personal relationship in work, task allocation and work-life balance). Following exploratory data analysis in the data section, only six predictor variables (sense of belonging to the organization, motivation to perform, sense of doing useful work, teamwork, fair work distribution, and job life balance) are chosen as representatives in a simple linear regression model. Others would be used to determine what kind of suggestions we may provide to a firm's management to assist them in improving company performance using the results from the simple linear regression approach. 
+
+According to the findings of linear regression, the three predictor variables with the highest  coefficients are: belong to the organization, motivation to perform, and sense of doing useful work, in descending order. 
+
+* $Job\ Satisfaction = 0.88 + 0.518\  Belonging + \epsilon$
+
+* $Job\ Satisfaction = 0.85 + 0.467\  Motivation\ to\ perform + \epsilon$
+
+* $Job\ Satisfaction = 1.138 + 0.412\  Doing\ Useful\ Work + \epsilon$
+
+
+Consequently, variables with larger coefficients are more important because they represent a larger change in the response. Therefore, the following discussion would focus on those three predictor variables with the highest  coefficients to analyze what kind of practice need to take and which direction should be followed to help managers to improve employees’ job satisfaction. 
+
+## 5.2 What we learn through this research?
+
+### 5.2.1 From perspective of Sense of Belonging to the Organization
+
+According to the predictor variable Belonging has the highest coefficient, obviously, it is the most important indicator and represents the most change to worker’s job satisfaction among all predictor variables, which means it is possible to improve job satisfaction by improving worker’s sense of belonging to organizations. A feeling of belonging occurs when an individual feels included and accepted for who they really are. Based on [@Deloitte2021], Employees are increasingly seeking personal fulfillment and pleasure via their job, and a feeling of belonging is critical to this. In 2020, when teams began to work remotely, belonging became more crucial than ever. According to research [@Kris2020], during COVID-19, belonging became 12 percent more significant for employee happiness, which is essential for employee work satisfaction. A leader of a local government agency and manager of an organization are obliged to continue paying attention to and developing employees' feeling of belonging, so that each employee expresses satisfaction with his or her duties and functions and has the courage to continue to improve their performance.
+
+
+### 5.2.2 From perspective of Motivation to Perform
+
+The fact that the predictor variable desire to perform has the second-highest coefficient demonstrates that it is possible to raise a worker's drive to perform in order to increase job satisfaction. Employee motivation and work satisfaction are two notions that are mutually reinforcing. Job satisfaction is inversely proportional to motivation. Employees that are pleased and comfortable with their employment roles are more driven to perform their obligations properly. According to surveys conducted across a variety of sectors [@ Lawson 2021], workers who report a high level of motivation also report a higher sense of job satisfaction. Strong motivation leads to greater work satisfaction. Additionally, an employee's capacity to manage professional and personal obligations is critical. When an employee believes their employer provides these demands, they are more driven to perform at or beyond business standards and report being pleased with their career choices.
+
+
+### 5.2.3 From perspective of Sense of Sense of Doing Useful Work
+
+The predictor variable sense of doing useful work has the third-highest coefficient proves that to boost job satisfaction, it is feasible to increase a worker's feeling of performing valuable work. According to the research of [@Mayo2020], Understanding the meaning of work is one of the strategies for increasing job satisfaction. Consider how anything we do benefits others or contributes to society. Perceiving the worth of our labor might help us feel more satisfied with our jobs. The search for meaning is a fundamental human need, and our job provides the primary context in which that need might be met. Our job may satiate the need for importance by providing for both the expression of individuality and the chance to contribute meaningfully while engaging with others.[@Tom1982] stressed that, in addition to receiving personal acknowledgment for their efforts, workers want to be a part of something larger than themselves. When people are pursuing a meaningful goal or are engaged in work that is personally meaningful, considerable beneficial benefits occur. Increased levels of dedication, empowerment, happiness, and a feeling of fulfillment are among these effects.
+
+## 5.3 Limitation and Weakness
+
+
+### 5.3.1 Truthfulness of Response
+
+All survey answers are collected by mobile phone and not collected by official questionnaire, which makes the response and data lack authenticity and not not convincing enough. Furthermore, data used in this paper are collected by career related questions, for which people may not give the true answer, since they are afraid the true answer would negatively affect their career path. In this way, there could exist some bias in the result due to untruthful data. 
+
+### 5.3.2 Correlation and Causation
+
+research is to establish the existence of a correlation between two variables. This does not entail, however, that the relationship between two variables is due to the occurrence of the other. There is no guarantee that the conditions and logical outcomes are related even if a line in a simple linear regression fits well with the information emphasis. Job satisfaction and several predictor variables are linked, but there is no solid evidence that these factors affect job satisfaction. This suggests that it is plausible, but not guaranteed, to enhance worker job satisfaction by altering one or more of these predictor variables.
+
+
+## 5.4 What is left and how should we proceed in the future?
+
+In the future study, the data collected method should be improved by collecting responses via official questionnaires and the responders are able to answer anonymously according to their own willingness, which practice could make the answer and data more reliable and reflect more truth. 
+
+In most cases, regression analysis is used in order to determine whether there is any correlation between variables. Extra investigation and statistical analysis are required to determine the exact and precise nature of this connection and if one element contributes to the occurrence of another.
